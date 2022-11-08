@@ -1,23 +1,39 @@
-import logo from './logo.svg';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { user, db } from './core'
+
+import Header from './components/Header';
+
+import Chat from './components/Chat';
+
 import './App.css';
 
 function App() {
+  const [username, setUsername] = useState('')
+
+  useEffect(() => {
+    // 初始化
+    user
+    .get('alias')
+    .on(v => setUsername(v));
+
+    // signed in
+    db.on('auth', async (event) => {
+      const alias = await user.get('alias');
+      setUsername(alias)
+    })
+  }, [])
+
+  const handleSignedOut = useCallback(() => {
+    setUsername('')
+    user.leave()
+  }, [])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Header username={username} onSignedOut={handleSignedOut} />
+
+      <Chat username={username} />
     </div>
   );
 }
