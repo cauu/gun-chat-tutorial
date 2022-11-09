@@ -1,7 +1,7 @@
 import React,  { useEffect, useRef, useState } from 'react'
 import GUN from 'gun';
 
-import { user } from '../../core'
+import { db, user } from '../../core'
 
 import Login from '../Login'
 
@@ -11,7 +11,6 @@ import { useCallback } from 'react';
 const Chat = (props) => {
   const { username } = props
   const messages = useRef([])
-  const [db] = useState(new GUN())
   const [_, forceUpdate] = useState({})
   const [newMessage, setNewMessage] = useState('')
 
@@ -20,6 +19,7 @@ const Chat = (props) => {
     const message = user.get('all').set({ what: newMessage });
     const index = new Date().toISOString();
     db.get('chat').get(index).put(message);
+    setNewMessage('')
     // newMessage = '';
     // canAutoScroll = true;
     // autoScroll();
@@ -34,6 +34,7 @@ const Chat = (props) => {
       },
       '-': 1, // filter in reverse
     };
+
     db.get('chat')
       .map(match)
       .once(async (data, id) => {
@@ -49,7 +50,7 @@ const Chat = (props) => {
             when: GUN.state.is(data, 'what'), // get the internal timestamp for the what property.
           };
           if (message.what) {
-            messages.current = [...messages.current.slice(-100), message]
+            messages.current = [...messages.current.slice(-100), message].sort((m1, m2) => m1.when - m2.when)
             forceUpdate({})
             // if (canAutoScroll) {
             //   autoScroll();
@@ -74,11 +75,11 @@ const Chat = (props) => {
           }
         </main>
 
-        <form onSubmit={handleSendMessage}>
+        <div className="form">
           <input type="text" placeholder="Type a message..." value={newMessage} maxlength="100" onChange={(e) => setNewMessage(e.target.value)} />
 
-          <button type="submit" disabled={!newMessage}>💥</button>
-        </form>
+          <button disabled={!newMessage} onClick={handleSendMessage}>💥</button>
+        </div>
       </div>
     )
   }
