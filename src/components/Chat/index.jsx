@@ -2,6 +2,7 @@ import React,  { useEffect, useRef, useState } from 'react'
 import GUN from 'gun';
 
 import { db, user } from '../../core'
+import { useAutoScroll } from '../../hooks/use-autoscroll'
 
 import Login from '../Login'
 
@@ -13,6 +14,12 @@ const Chat = (props) => {
   const messages = useRef([])
   const [_, forceUpdate] = useState({})
   const [newMessage, setNewMessage] = useState('')
+  const {
+    scrollTarget,
+    watchScroll,
+    autoScroll
+  } = useAutoScroll()
+
 
   const handleSendMessage = useCallback(async () => {
     // const secret = await window.SEA.encrypt(newMessage, '#foo');
@@ -20,9 +27,6 @@ const Chat = (props) => {
     const index = new Date().toISOString();
     db.get('chat').get(index).put(message);
     setNewMessage('')
-    // newMessage = '';
-    // canAutoScroll = true;
-    // autoScroll();
   }, [newMessage])
 
   useEffect(() => {
@@ -52,11 +56,7 @@ const Chat = (props) => {
           if (message.what) {
             messages.current = [...messages.current.slice(-100), message].sort((m1, m2) => m1.when - m2.when)
             forceUpdate({})
-            // if (canAutoScroll) {
-            //   autoScroll();
-            // } else {
-            //   unreadMessages = true;
-            // }
+            autoScroll()
           }
         }
       })
@@ -65,7 +65,7 @@ const Chat = (props) => {
   if (username) {
     return (
       <div>
-        <main>
+        <main onScroll={watchScroll}>
           {
             messages.current.map((msg) => {
               return (
@@ -73,6 +73,7 @@ const Chat = (props) => {
               )
             })
           }
+          <div class="dummy" ref={scrollTarget} />
         </main>
 
         <div className="form">
